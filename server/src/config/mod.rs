@@ -1,5 +1,7 @@
 use std::env;
 
+use crate::utils::error::AppError;
+
 pub mod cors;
 pub mod security;
 
@@ -27,23 +29,33 @@ pub struct Config {
 
 impl Config {
     /// Load configuration from environment variables with sensible defaults.
-    pub fn from_env() -> Self {
-        Self {
-            database_url: env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgres://localhost/agora".to_string()),
+    ///
+    /// Returns `Result<Self, AppError>` to properly handle missing or invalid
+    /// required environment variables.
+    pub fn from_env() -> Result<Self, AppError> {
+        let database_url = env::var("DATABASE_URL").map_err(|_| {
+            AppError::ValidationError("DATABASE_URL environment variable is required".to_string())
+        })?;
 
-            port: env::var("PORT")
-                .ok()
-                .and_then(|p| p.parse().ok())
-                .unwrap_or(3001),
+        let port = env::var("PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(3001);
 
-            rust_env: env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string()),
+        let rust_env = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
-            cors_allowed_origins: env::var("CORS_ALLOWED_ORIGINS")
-                .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string()),
+        let cors_allowed_origins = env::var("CORS_ALLOWED_ORIGINS")
+            .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
 
-            rust_log: env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()),
-        }
+        let rust_log = env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+
+        Ok(Self {
+            database_url,
+            port,
+            rust_env,
+            cors_allowed_origins,
+            rust_log,
+        })
     }
 
     /// Helper to identify if running in production.
@@ -55,25 +67,180 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    // Mutex to prevent environment variable tests from running in parallel
+    static ENV_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
-    fn test_config_from_env_defaults() {
-        // Ensure that clearing environment variables doesn't break initialization.
-        // In practice we can't easily clear all global env in parallel tests,
-        // but we can verify that the default values are correct if variables are unset.
+    fn test_config_from_env_success() {
+        let _guard = ENV_MUTEX.lock().unwrap();
 
-        // We'll just test that from_env() at least works and has expected structure.
+        // Set required environment variable
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+
         let config = Config::from_env();
+        assert!(
+            config.is_ok(),
+            "Config::from_env() should succeed with DATABASE_URL set"
+        );
+
+        let config = config.unwrap();
+        assert_eq!(
+            config.database_url,
+            "postgres://test:password@localhost/testdb"
+        );
         assert!(config.port > 0);
+
+        // Clean up
+        env::remove_var("DATABASE_URL");
+    }
+
+    #[test]
+    fn test_config_from_env_missing_database_url() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        // Ensure DATABASE_URL is not set
+        env::remove_var("DATABASE_URL");
+
+        let result = Config::from_env();
+        assert!(
+            result.is_err(),
+            "Config::from_env() should fail without DATABASE_URL"
+        );
+
+        let err = result.unwrap_err();
+        assert!(matches!(err, AppError::ValidationError(_)));
+        assert!(err.to_string().contains("DATABASE_URL"));
+    }
+
+    #[test]
+    fn test_config_from_env_default_port() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::remove_var("PORT");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.port, 3001);
+
+        env::remove_var("DATABASE_URL");
+    }
+
+    #[test]
+    fn test_config_from_env_custom_port() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::set_var("PORT", "8080");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.port, 8080);
+
+        env::remove_var("DATABASE_URL");
+        env::remove_var("PORT");
+    }
+
+    #[test]
+    fn test_config_from_env_default_rust_env() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::remove_var("RUST_ENV");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.rust_env, "development");
+
+        env::remove_var("DATABASE_URL");
+    }
+
+    #[test]
+    fn test_config_from_env_custom_rust_env() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::set_var("RUST_ENV", "production");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.rust_env, "production");
+
+        env::remove_var("DATABASE_URL");
+        env::remove_var("RUST_ENV");
+    }
+
+    #[test]
+    fn test_config_from_env_default_cors_origins() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::remove_var("CORS_ALLOWED_ORIGINS");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(
+            config.cors_allowed_origins,
+            "http://localhost:3000,http://localhost:5173"
+        );
+
+        env::remove_var("DATABASE_URL");
+    }
+
+    #[test]
+    fn test_config_from_env_custom_cors_origins() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::set_var("CORS_ALLOWED_ORIGINS", "http://example.com,http://test.com");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(
+            config.cors_allowed_origins,
+            "http://example.com,http://test.com"
+        );
+
+        env::remove_var("DATABASE_URL");
+        env::remove_var("CORS_ALLOWED_ORIGINS");
+    }
+
+    #[test]
+    fn test_config_from_env_default_rust_log() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::remove_var("RUST_LOG");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.rust_log, "info");
+
+        env::remove_var("DATABASE_URL");
+    }
+
+    #[test]
+    fn test_config_from_env_custom_rust_log() {
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+        env::set_var("RUST_LOG", "debug");
+
+        let config = Config::from_env().unwrap();
+        assert_eq!(config.rust_log, "debug");
+
+        env::remove_var("DATABASE_URL");
+        env::remove_var("RUST_LOG");
     }
 
     #[test]
     fn test_is_production() {
-        let mut config = Config::from_env();
+        let _guard = ENV_MUTEX.lock().unwrap();
+
+        env::set_var("DATABASE_URL", "postgres://test:password@localhost/testdb");
+
+        let mut config = Config::from_env().unwrap();
         config.rust_env = "production".into();
         assert!(config.is_production());
 
         config.rust_env = "development".into();
         assert!(!config.is_production());
+
+        env::remove_var("DATABASE_URL");
     }
 }
