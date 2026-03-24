@@ -55,6 +55,7 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use temp_env;
 
     #[test]
     fn test_config_from_env_defaults() {
@@ -75,5 +76,49 @@ mod tests {
 
         config.rust_env = "development".into();
         assert!(!config.is_production());
+    }
+
+    #[tokio::test]
+    async fn test_port_from_env_variable() {
+        // Test that PORT environment variable is correctly read
+        temp_env::async_with_vars([("PORT", Some("8080"))], async {
+            let config = Config::from_env();
+            assert_eq!(config.port, 8080);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_port_default_when_not_set() {
+        // Test that default port 3001 is used when PORT is not set
+        temp_env::async_with_vars([("PORT", None::<&str>)], async {
+            let config = Config::from_env();
+            assert_eq!(config.port, 3001);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_port_invalid_value_falls_back_to_default() {
+        // Test that invalid port values fall back to default
+        temp_env::async_with_vars([("PORT", Some("invalid"))], async {
+            let config = Config::from_env();
+            assert_eq!(config.port, 3001);
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_port_valid_range_values() {
+        // Test various valid port values
+        let valid_ports = [80, 443, 8000, 8080, 9000, 65535];
+
+        for port in valid_ports {
+            temp_env::async_with_vars([("PORT", Some(port.to_string()))], async {
+                let config = Config::from_env();
+                assert_eq!(config.port, port);
+            })
+            .await;
+        }
     }
 }

@@ -32,3 +32,7 @@ rust_decimal = { version = "1.33", features = ["db-postgres"] }
 thiserror = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Testing
+[dev-dependencies]
+temp-env = { version = "0.3", features = ["async_closure"] }
