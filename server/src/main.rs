@@ -4,6 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
+use agora_server::config::request_id::REQUEST_ID_HEADER;
 use agora_server::config::Config;
 use agora_server::routes::create_routes;
 use agora_server::utils::logging::init_logging;
@@ -34,6 +35,7 @@ async fn main() {
     let app: Router = create_routes(pool.clone());
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     tracing::info!("🚀 Server running at http://localhost:{}", config.port);
+    tracing::info!("Request IDs will be set via '{REQUEST_ID_HEADER}' header");
 
     let listener = TcpListener::bind(addr)
         .await

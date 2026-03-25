@@ -1,9 +1,11 @@
 use std::env;
 
 pub mod cors;
+pub mod request_id;
 pub mod security;
 
 pub use cors::create_cors_layer;
+pub use request_id::{propagate_request_id_layer, set_request_id_layer};
 pub use security::create_security_headers_layer;
 
 /// Application configuration loaded from environment variables.

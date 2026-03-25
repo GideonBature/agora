@@ -583,3 +583,27 @@ pub fn remove_from_stakers_list(env: &Env, organizer: &Address) {
         .persistent()
         .set(&DataKey::StakersList, &new_list);
 }
+
+// ── Token Whitelist Storage ───────────────────────────────────────────────────
+
+/// Adds a token address to the payment token whitelist.
+pub fn add_to_token_whitelist(env: &Env, token: &Address) {
+    env.storage()
+        .persistent()
+        .set(&DataKey::TokenWhitelist(token.clone()), &true);
+}
+
+/// Removes a token address from the payment token whitelist.
+pub fn remove_from_token_whitelist(env: &Env, token: &Address) {
+    env.storage()
+        .persistent()
+        .remove(&DataKey::TokenWhitelist(token.clone()));
+}
+
+/// Returns true if the given token address is whitelisted for payments.
+pub fn is_token_whitelisted(env: &Env, token: &Address) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::TokenWhitelist(token.clone()))
+        .unwrap_or(false)
+}

@@ -326,4 +326,6 @@ pub enum DataKey {
     TotalStaked,
     /// List of all currently staked organizer addresses for proportional distribution
     StakersList,
+    /// Mapping of token address to whitelist status (Persistent)
+    TokenWhitelist(Address),
 }

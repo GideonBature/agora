@@ -20,7 +20,8 @@ fn test_initialize_with_multisig() {
     let (env, client, admin, _, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Verify multi-sig config was created
     let config = client.get_multisig_config();
@@ -34,7 +35,8 @@ fn test_create_proposal_add_admin() {
     let (env, client, admin1, admin2, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Create proposal to add admin2
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -52,7 +54,8 @@ fn test_execute_proposal_single_admin() {
     let (env, client, admin1, admin2, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Create and execute proposal to add admin2 (threshold = 1, so auto-approved)
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -71,7 +74,8 @@ fn test_multisig_workflow_add_admin() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2 (threshold = 1)
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -107,7 +111,8 @@ fn test_propose_set_platform_wallet() {
     let platform_wallet = Address::generate(&env);
     let new_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2 and set threshold to 2
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -135,7 +140,8 @@ fn test_remove_admin_with_multisig() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2 and admin3
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -171,7 +177,8 @@ fn test_cannot_remove_last_admin() {
     let (env, client, admin1, _, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Try to remove the only admin - should fail
     client.propose_remove_admin(&admin1, &admin1, &0);
@@ -183,7 +190,8 @@ fn test_cannot_add_duplicate_admin() {
     let (env, client, admin1, _, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Try to add admin1 again - should fail
     client.propose_add_admin(&admin1, &admin1, &0);
@@ -195,7 +203,8 @@ fn test_cannot_approve_twice() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -218,7 +227,8 @@ fn test_cannot_execute_twice() {
     let (env, client, admin1, admin2, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Create and execute proposal
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -234,7 +244,8 @@ fn test_invalid_threshold_too_high() {
     let (env, client, admin1, _, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Try to set threshold higher than admin count - should fail
     client.propose_set_threshold(&admin1, &5, &0);
@@ -246,7 +257,8 @@ fn test_invalid_threshold_zero() {
     let (env, client, admin1, _, _) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Try to set threshold to 0 - should fail
     client.propose_set_threshold(&admin1, &0, &0);
@@ -257,7 +269,8 @@ fn test_get_active_proposals() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Create multiple proposals
     let proposal_id1 = client.propose_add_admin(&admin1, &admin2, &0);
@@ -280,7 +293,8 @@ fn test_proposal_expiration() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2 and set threshold to 2
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);
@@ -307,7 +321,8 @@ fn test_threshold_adjustment_on_admin_removal() {
     let (env, client, admin1, admin2, admin3) = create_test_env();
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin1, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin1, &platform_wallet, &500, &usdc_token);
 
     // Add admin2 and admin3
     let proposal_id = client.propose_add_admin(&admin1, &admin2, &0);

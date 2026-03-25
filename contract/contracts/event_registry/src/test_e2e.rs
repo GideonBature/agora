@@ -10,7 +10,8 @@ fn setup(env: &Env) -> (EventRegistryClient<'static>, Address, Address) {
     let admin = Address::generate(env);
     let platform_wallet = Address::generate(env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     (client, admin, platform_wallet)
 }
 

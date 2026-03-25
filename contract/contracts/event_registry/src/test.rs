@@ -16,7 +16,8 @@ fn test_register_and_get_series() {
     let admin = Address::generate(&env);
     let organizer = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Register two events for the organizer
     let event_id1 = String::from_str(&env, "event_1");
@@ -79,7 +80,8 @@ fn test_issue_and_use_series_pass() {
     let admin = Address::generate(&env);
     let organizer = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Register event and series
     let event_id = String::from_str(&env, "event_1");
@@ -151,8 +153,9 @@ fn test_double_initialization_fails() {
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
-    let result = client.try_initialize(&admin, &platform_wallet, &1000);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+    let result = client.try_initialize(&admin, &platform_wallet, &1000, &usdc_token);
     assert_eq!(result, Err(Ok(EventRegistryError::AlreadyInitialized)));
 }
 
@@ -163,8 +166,9 @@ fn test_initialization_invalid_fee() {
     let client = EventRegistryClient::new(&env, &contract_id);
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
 
-    let result = client.try_initialize(&admin, &platform_wallet, &10001);
+    let result = client.try_initialize(&admin, &platform_wallet, &10001, &usdc_token);
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidFeePercent)));
 }
 
@@ -176,8 +180,9 @@ fn test_initialization_invalid_address() {
 
     let contract_address = client.address.clone();
     let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
 
-    let result = client.try_initialize(&contract_address, &platform_wallet, &500);
+    let result = client.try_initialize(&contract_address, &platform_wallet, &500, &usdc_token);
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidAddress)));
 }
 
@@ -191,7 +196,8 @@ fn test_set_platform_fee() {
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_platform_fee(&10);
 
     assert_eq!(client.get_platform_fee(), 10);
@@ -207,7 +213,8 @@ fn test_set_platform_fee_invalid() {
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     let result = client.try_set_platform_fee(&10001);
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidFeePercent)));
 }
@@ -222,7 +229,8 @@ fn test_set_platform_fee_unauthorized() {
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_platform_fee(&10);
 }
 
@@ -235,7 +243,8 @@ fn test_storage_operations() {
 
     let admin = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let organizer = Address::generate(&env);
     let payment_address = Address::generate(&env);
@@ -374,7 +383,8 @@ fn test_register_event_success() {
     let platform_wallet = Address::generate(&env);
 
     env.mock_all_auths();
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_001");
     let metadata_cid = String::from_str(
@@ -434,7 +444,8 @@ fn test_register_event_unlimited_supply() {
     let platform_wallet = Address::generate(&env);
 
     env.mock_all_auths();
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "unlimited_event");
     let metadata_cid = String::from_str(
@@ -474,7 +485,8 @@ fn test_register_duplicate_event_fails() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_001");
     let metadata_cid = String::from_str(
@@ -526,7 +538,8 @@ fn test_get_event_payment_info() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &750);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &750, &usdc_token);
 
     let event_id = String::from_str(&env, "event_002");
     let metadata_cid = String::from_str(
@@ -566,7 +579,8 @@ fn test_update_event_status() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_001");
     let metadata_cid = String::from_str(
@@ -606,7 +620,8 @@ fn test_event_inactive_error() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     let event_id = String::from_str(&env, "event_001");
     let metadata_cid = String::from_str(
         &env,
@@ -645,7 +660,8 @@ fn test_complete_event_lifecycle() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &600);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &600, &usdc_token);
 
     let event_id = String::from_str(&env, "lifecycle_event");
     let metadata_cid = String::from_str(
@@ -697,7 +713,8 @@ fn test_update_metadata_success() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_metadata");
     let metadata_cid = String::from_str(
@@ -742,7 +759,8 @@ fn test_update_metadata_invalid_cid() {
     let platform_wallet = Address::generate(&env);
     env.mock_all_auths();
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_metadata");
     let metadata_cid = String::from_str(
@@ -794,7 +812,8 @@ fn test_set_ticket_payment_contract() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     assert_eq!(client.get_ticket_payment_contract(), ticket_payment);
@@ -810,7 +829,8 @@ fn test_set_custom_event_fee() {
     let admin = Address::generate(&env);
     let organizer = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "event_001");
     let metadata_cid = String::from_str(
@@ -877,7 +897,8 @@ fn test_increment_inventory_success() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "supply_event");
@@ -945,7 +966,8 @@ fn test_increment_inventory_max_supply_exceeded() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "limited_event");
@@ -1008,7 +1030,8 @@ fn test_increment_inventory_unlimited_supply() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "unlimited_event");
@@ -1067,7 +1090,8 @@ fn test_increment_inventory_event_not_found() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let fake_event_id = String::from_str(&env, "nonexistent");
@@ -1090,7 +1114,8 @@ fn test_increment_inventory_inactive_event() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "inactive_event");
@@ -1146,7 +1171,8 @@ fn test_increment_inventory_persists_across_reads() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "persist_event");
@@ -1208,7 +1234,8 @@ fn test_tier_limit_exceeds_max_supply() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "tier_test");
     let metadata_cid = String::from_str(
@@ -1274,7 +1301,8 @@ fn test_tier_not_found() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "tier_event");
@@ -1330,7 +1358,8 @@ fn test_tier_supply_exceeded() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "tier_limit_event");
@@ -1390,7 +1419,8 @@ fn test_multiple_tiers_inventory() {
     let platform_wallet = Address::generate(&env);
     let ticket_payment = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     client.set_ticket_payment_contract(&ticket_payment);
 
     let event_id = String::from_str(&env, "multi_tier_event");
@@ -1469,7 +1499,8 @@ fn test_update_event_status_noop_skips_event() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "status_noop_event");
     let metadata_cid = String::from_str(
@@ -1508,7 +1539,8 @@ fn test_blacklist_organizer() {
     let platform_wallet = Address::generate(&env);
     let organizer = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let reason = String::from_str(&env, "Fraudulent activity detected");
     client.blacklist_organizer(&organizer, &reason);
@@ -1537,7 +1569,8 @@ fn test_blacklist_prevents_event_registration() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let reason = String::from_str(&env, "Suspicious activity");
     client.blacklist_organizer(&organizer, &reason);
@@ -1582,7 +1615,8 @@ fn test_update_metadata_noop_skips_event() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "metadata_noop_event");
     let metadata_cid = String::from_str(
@@ -1621,7 +1655,8 @@ fn test_remove_from_blacklist() {
     let platform_wallet = Address::generate(&env);
     let organizer = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Blacklist organizer
     let reason = String::from_str(&env, "Initial blacklist");
@@ -1661,7 +1696,8 @@ fn test_blacklist_suspends_active_events() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "test_event");
     let metadata_cid = String::from_str(
@@ -1705,7 +1741,8 @@ fn test_blacklist_unauthorized_fails() {
     let platform_wallet = Address::generate(&env);
     let organizer = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Try to blacklist organizer without admin auth - should panic
     let reason = String::from_str(&env, "Malicious attempt");
@@ -1723,7 +1760,8 @@ fn test_double_blacklist_fails() {
     let platform_wallet = Address::generate(&env);
     let organizer = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Blacklist organizer once
     let reason = String::from_str(&env, "First blacklist");
@@ -1746,7 +1784,8 @@ fn test_remove_non_blacklisted_fails() {
     let platform_wallet = Address::generate(&env);
     let organizer = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     // Try to remove non-blacklisted organizer - should fail
     let reason = String::from_str(&env, "Removal attempt");
@@ -1768,7 +1807,8 @@ fn test_register_event_with_resale_cap() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "capped_event");
     let metadata_cid = String::from_str(
@@ -1819,7 +1859,8 @@ fn test_register_event_resale_cap_zero() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "no_markup_event");
     let metadata_cid = String::from_str(
@@ -1859,7 +1900,8 @@ fn test_register_event_resale_cap_none() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "free_market_event");
     let metadata_cid = String::from_str(
@@ -1899,7 +1941,8 @@ fn test_postpone_event_sets_grace_period() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "postponed_event");
     let metadata_cid = String::from_str(
@@ -1946,7 +1989,8 @@ fn test_register_event_resale_cap_invalid() {
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
 
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "bad_cap_event");
     let metadata_cid = String::from_str(
@@ -1983,7 +2027,8 @@ fn test_cancel_event_success() {
     let organizer = Address::generate(&env);
     let payment_addr = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "cancel_me");
     let metadata_cid = String::from_str(
@@ -2023,7 +2068,8 @@ fn test_cancel_already_cancelled_fails() {
     let admin = Address::generate(&env);
     let organizer = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "cancel_twice");
     let metadata_cid = String::from_str(
@@ -2061,7 +2107,8 @@ fn test_update_status_on_cancelled_event_fails() {
     let admin = Address::generate(&env);
     let organizer = Address::generate(&env);
     let platform_wallet = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
 
     let event_id = String::from_str(&env, "no_updates");
     let metadata_cid = String::from_str(
@@ -2099,7 +2146,8 @@ fn setup_loyalty_env(env: &Env) -> (crate::EventRegistryClient<'static>, Address
     let client = crate::EventRegistryClient::new(env, &contract_id);
     let admin = Address::generate(env);
     let platform_wallet = Address::generate(env);
-    client.initialize(&admin, &platform_wallet, &500);
+    let usdc_token = Address::generate(env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
     (client, admin, platform_wallet)
 }
 
@@ -2585,4 +2633,103 @@ fn test_is_organizer_verified_false_when_not_staked() {
 
     let organizer = Address::generate(&env);
     assert!(!client.is_organizer_verified(&organizer));
+}
+
+// ==================== USDC Token Whitelist Tests ====================
+
+#[test]
+fn test_usdc_token_whitelisted_after_init() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    // USDC token must be whitelisted automatically after initialization
+    assert!(client.is_token_whitelisted(&usdc_token));
+}
+
+#[test]
+fn test_non_usdc_token_not_whitelisted_after_init() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    let other_token = Address::generate(&env);
+
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    // A different token should NOT be whitelisted
+    assert!(!client.is_token_whitelisted(&other_token));
+}
+
+#[test]
+fn test_admin_can_add_token_to_whitelist() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    let new_token = Address::generate(&env);
+
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    assert!(!client.is_token_whitelisted(&new_token));
+    client.add_to_token_whitelist(&new_token);
+    assert!(client.is_token_whitelisted(&new_token));
+}
+
+#[test]
+fn test_admin_can_remove_token_from_whitelist() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    // USDC is whitelisted after init
+    assert!(client.is_token_whitelisted(&usdc_token));
+
+    // Admin removes it
+    client.remove_from_token_whitelist(&usdc_token);
+    assert!(!client.is_token_whitelisted(&usdc_token));
+}
+
+#[test]
+#[should_panic] // Authentication failure — non-admin cannot add to whitelist
+fn test_non_admin_cannot_add_token_to_whitelist() {
+    let env = Env::default();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    let new_token = Address::generate(&env);
+
+    // Only mock auth for initialize, not for add_to_token_whitelist
+    env.mock_all_auths();
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    // Clear mocked auths so the next call requires real auth
+    let env2 = Env::default();
+    let client2 = EventRegistryClient::new(&env2, &contract_id);
+    client2.add_to_token_whitelist(&new_token);
 }

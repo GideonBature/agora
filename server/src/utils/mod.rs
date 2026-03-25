@@ -3,3 +3,6 @@ pub mod logging;
 pub mod response;
 
 // Utility helpers (hashing, validation) will be added here
+
+#[cfg(test)]
+mod docker_compose_tests;

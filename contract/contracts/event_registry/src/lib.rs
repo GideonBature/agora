@@ -105,16 +105,19 @@ impl EventRegistry {
     }
     /// Initializes the contract configuration. Can only be called once.
     /// Sets up initial admin with multi-sig configuration (threshold = 1 for single admin).
+    /// The `usdc_token` address is automatically added to the payment token whitelist.
     ///
     /// # Arguments
     /// * `admin` - The administrator address.
     /// * `platform_wallet` - The platform wallet address for fees.
     /// * `platform_fee_percent` - Initial platform fee in basis points (10000 = 100%).
+    /// * `usdc_token` - The USDC token contract address, automatically whitelisted on init.
     pub fn initialize(
         env: Env,
         admin: Address,
         platform_wallet: Address,
         platform_fee_percent: u32,
+        usdc_token: Address,
     ) -> Result<(), EventRegistryError> {
         if storage::is_initialized(&env) {
             return Err(EventRegistryError::AlreadyInitialized);
@@ -122,6 +125,7 @@ impl EventRegistry {
 
         validate_address(&env, &admin)?;
         validate_address(&env, &platform_wallet)?;
+        validate_address(&env, &usdc_token)?;
 
         let initial_fee = if platform_fee_percent == 0 {
             500
@@ -145,6 +149,8 @@ impl EventRegistry {
         storage::set_multisig_config(&env, &multisig_config);
         storage::set_platform_wallet(&env, &platform_wallet);
         storage::set_platform_fee(&env, initial_fee);
+        // Automatically whitelist the USDC token provided at initialization
+        storage::add_to_token_whitelist(&env, &usdc_token);
         storage::set_initialized(&env, true);
 
         env.events().publish(
@@ -157,6 +163,28 @@ impl EventRegistry {
             },
         );
         Ok(())
+    }
+
+    /// Adds a token address to the payment token whitelist. Only callable by the administrator.
+    pub fn add_to_token_whitelist(env: Env, token: Address) -> Result<(), EventRegistryError> {
+        let admin = storage::get_admin(&env).ok_or(EventRegistryError::NotInitialized)?;
+        admin.require_auth();
+        validate_address(&env, &token)?;
+        storage::add_to_token_whitelist(&env, &token);
+        Ok(())
+    }
+
+    /// Removes a token address from the payment token whitelist. Only callable by the administrator.
+    pub fn remove_from_token_whitelist(env: Env, token: Address) -> Result<(), EventRegistryError> {
+        let admin = storage::get_admin(&env).ok_or(EventRegistryError::NotInitialized)?;
+        admin.require_auth();
+        storage::remove_from_token_whitelist(&env, &token);
+        Ok(())
+    }
+
+    /// Returns true if the given token address is whitelisted for payments.
+    pub fn is_token_whitelisted(env: Env, token: Address) -> bool {
+        storage::is_token_whitelisted(&env, &token)
     }
 
     /// Register a new event with organizer authentication and tiered pricing
