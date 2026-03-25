@@ -14,7 +14,7 @@ async fn main() {
     dotenv().ok();
     init_logging();
 
-    let config = Config::from_env();
+    let config = Config::from_env().expect("Failed to load configuration");
     tracing::info!("Starting server in {} mode", config.rust_env);
 
     let pool = PgPoolOptions::new()
