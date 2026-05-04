@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use crate::types::{EventRegistrationArgs, Role, TicketTier};
 use crate::{EventRegistry, EventRegistryClient};
 use soroban_sdk::{testutils::Address as _, Address, Env, Map, String, Vec};

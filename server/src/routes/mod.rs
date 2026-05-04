@@ -37,20 +37,12 @@ use crate::config::{
 use crate::handlers::{
     auth::{logout, request_nonce, verify_signature},
     categories::{get_category, list_categories},
-<<<<<<< Updated upstream
-    events::{get_event, list_events, search_events, submit_event_rating, toggle_event_flag, EventState},
-    example_empty_success,
-    example_not_found,
-    example_validation_error,
-    health::{ health_check, health_check_blockchain, health_check_db, health_check_ready },
-=======
     events::{
         get_event, list_events, search_events, submit_event_rating, toggle_event_flag, EventState,
     },
     example_empty_success, example_not_found, example_validation_error,
     health::{health_check, health_check_blockchain, health_check_db, health_check_ready},
     leaderboard::get_leaderboard,
->>>>>>> Stashed changes
     monitoring::{monitoring_dashboard, MonitoringState},
     profile::{get_my_profile, get_profile_by_address, upsert_profile},
     qr_payload::{generate_qr_payload, list_qr_payloads, mark_qr_used, verify_qr_payload},

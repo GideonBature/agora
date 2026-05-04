@@ -14,7 +14,7 @@ fn test_payment_address(env: &Env) -> Address {
 }
 
 /// Helper function to setup contract and initialize it
-fn setup_contract(env: &Env) -> (EventRegistryClient, Address, Address) {
+fn setup_contract(env: &Env) -> (EventRegistryClient<'_>, Address, Address) {
     let contract_id = env.register(EventRegistry, ());
     let client = EventRegistryClient::new(env, &contract_id);
     let admin = Address::generate(env);

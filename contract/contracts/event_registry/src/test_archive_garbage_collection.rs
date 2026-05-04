@@ -4,8 +4,6 @@
 //! The archive_event function enforces a 30-day waiting period after event_end_time
 //! before allowing archival, which reclaims storage by deleting non-essential data.
 
-#![cfg(test)]
-
 use crate::{
     error::EventRegistryError,
     types::{EventRegistrationArgs, TicketTier},
@@ -61,7 +59,10 @@ fn register_test_event(
         name: String::from_str(env, "Test Event for Archival"),
         organizer_address: organizer.clone(),
         payment_address: organizer.clone(),
-        metadata_cid: String::from_str(env, "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"),
+        metadata_cid: String::from_str(
+            env,
+            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+        ),
         max_supply: 100,
         milestone_plan: None,
         tiers,

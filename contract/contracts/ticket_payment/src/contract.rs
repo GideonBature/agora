@@ -14,7 +14,7 @@ use crate::storage::{
     set_discount_code, set_event_dispute_status, set_event_registry, set_governor, set_highest_bid,
     set_initialized, set_is_paused, set_oracle_address, set_partial_refund_index,
     set_partial_refund_percentage, set_platform_wallet, set_price_switched,
-    set_pro_subscription_contract, set_proposal, set_slippage_bps, set_total_governors,
+    set_proposal, set_slippage_bps, set_total_governors,
     set_transfer_fee, set_usdc_token, set_withdrawal_cap, store_payment, store_validation_hash,
     subtract_from_active_escrow_by_token, subtract_from_active_escrow_total,
     subtract_from_total_fees_collected_by_token, update_event_balance, verify_secret,
@@ -868,8 +868,7 @@ impl TicketPaymentContract {
                 .ok_or(TicketPaymentError::ArithmeticError)?;
 
             // Cap: referral reward must never exceed the remaining organizer amount
-            let reward = core::cmp::min(reward, total_organizer_amount);
-            reward
+            core::cmp::min(reward, total_organizer_amount)
         } else {
             0
         };
