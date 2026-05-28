@@ -41,11 +41,15 @@ const item = {
   },
 };
 
+import { CategoryChips } from "./category-chips";
+
 type CategorySectionProps = {
+  activeCategory: string;
+  onCategoryChange: (category: string) => void;
   onError: (message: string) => void;
 };
 
-export function CategorySection({ onError }: CategorySectionProps) {
+export function CategorySection({ activeCategory, onCategoryChange, onError }: CategorySectionProps) {
   const [categories, setCategories] = useState<DiscoverCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -104,43 +108,12 @@ export function CategorySection({ onError }: CategorySectionProps) {
             Browse by Category
           </motion.h3>
 
-          <motion.div variants={container} className="flex flex-wrap gap-4">
-            {isLoading &&
-              Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="h-12 w-36 animate-pulse rounded-full border-2 border-black/30 bg-black/10"
-                />
-              ))}
-            {!isLoading &&
-              categoriesToRender.map((category) => (
-              <motion.div key={category.name} variants={item}>
-                <button
-                  type="button"
-                  style={{ backgroundColor: category.color }}
-                  className={`
-                    flex items-center gap-2 px-[26px] py-[13px] rounded-full border-2 border-black
-                    font-medium text-[15px] whitespace-nowrap transition-all
-                    shadow-[-4px_4px_0px_0px_rgba(0,0,0,1)]
-                    active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
-                    hover:opacity-90 min-w-32 justify-center
-                  `}
-                >
-                  <Image
-                    src={category.icon}
-                    alt={`${category.name} icon`}
-                    width={20}
-                    height={20}
-                    className="mr-[2px] object-contain"
-                  />
-                  <span className="text-black capitalize">{category.name}</span>
-                </button>
-              </motion.div>
-              ))}
-            {!isLoading && categories.length === 0 && (
-              <p className="text-sm text-black/60">No data available</p>
-            )}
-          </motion.div>
+          <CategoryChips 
+            categories={categoriesToRender} 
+            activeCategory={activeCategory} 
+            onCategoryChange={onCategoryChange} 
+            isLoading={isLoading} 
+          />
         </motion.div>
       </div>
     </section>

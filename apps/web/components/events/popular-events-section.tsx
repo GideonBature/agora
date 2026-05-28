@@ -45,10 +45,11 @@ const DEFAULT_FILTERS: FilterState = {
 };
 
 type PopularEventsSectionProps = {
+  activeCategory?: string;
   onError: (message: string) => void;
 };
 
-export function PopularEventsSection({ onError }: PopularEventsSectionProps) {
+export function PopularEventsSection({ activeCategory, onError }: PopularEventsSectionProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [search, setSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -99,6 +100,8 @@ export function PopularEventsSection({ onError }: PopularEventsSectionProps) {
       result = result.filter((event) =>
         filters.categories.includes(event.category),
       );
+    } else if (activeCategory && activeCategory !== "All") {
+      result = result.filter((event) => event.category.toLowerCase() === activeCategory.toLowerCase());
     }
 
     // 3. Location
@@ -132,7 +135,7 @@ export function PopularEventsSection({ onError }: PopularEventsSectionProps) {
     }
 
     return result;
-  }, [search, filters, events]);
+  }, [search, filters, events, activeCategory]);
 
   const widthVariants = {
     focused: { width: "12rem" },

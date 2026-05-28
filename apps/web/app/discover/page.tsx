@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/footer";
 
 export default function DiscoverPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("All");
 
   const showErrorToast = (message: string) => {
     setToastMessage(message);
@@ -23,8 +24,15 @@ export default function DiscoverPage() {
           {toastMessage}
         </div>
       )}
-      <CategorySection onError={showErrorToast} />
-      <PopularEventsSection onError={showErrorToast} />
+      <CategorySection 
+        activeCategory={activeCategory} 
+        onCategoryChange={setActiveCategory} 
+        onError={showErrorToast} 
+      />
+      <PopularEventsSection 
+        activeCategory={activeCategory} 
+        onError={showErrorToast} 
+      />
       <OrganizerComponent onError={showErrorToast} />
       <Footer />
     </main>
