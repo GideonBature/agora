@@ -96,7 +96,7 @@ async fn handle_socket(mut socket: WebSocket, broadcaster: PurchaseBroadcaster) 
                                 continue;
                             }
                         };
-                        if socket.send(Message::Text(json.into())).await.is_err() {
+                        if socket.send(Message::Text(json)).await.is_err() {
                             // Client disconnected.
                             break;
                         }

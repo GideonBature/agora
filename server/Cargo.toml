@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # Web framework
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.7", features = ["ws", "multipart"] }
 
 # Async runtime
 tokio = { version = "1.37", features = ["full"] }
@@ -46,6 +46,24 @@ ed25519-dalek = { version = "2.1", features = ["rand_core"] }
 rand = "0.8"
 base64 = "0.21"
 hex = "0.4"
+
+# Redis for caching
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# Rate limiting (using built-in RateLimitLayer only; tower_governor requires axum 0.8)
+
+# System monitoring
+sysinfo = "0.30"
+
+# JWT authentication (Issue #484)
+jsonwebtoken = "9.3"
+
+# AWS S3 for image uploads
+aws-sdk-s3 = "1.82"
+aws-credential-types = "1.2"
+aws-config = "1.5"
+
+# Currency conversion HTTP client already covered by reqwest above
 
 # Testing
 [dev-dependencies]

@@ -19,11 +19,7 @@ use uuid::Uuid;
 /// Axum middleware that records every admin request to `audit_logs`.
 ///
 /// Attach via `axum::middleware::from_fn_with_state` on the admin router.
-pub async fn audit_layer(
-    State(pool): State<PgPool>,
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn audit_layer(State(pool): State<PgPool>, request: Request, next: Next) -> Response {
     let method = request.method().to_string();
     let path = request.uri().path().to_string();
 

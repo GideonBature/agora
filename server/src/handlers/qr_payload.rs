@@ -10,7 +10,7 @@
 //! ## Cryptography
 //! Uses Ed25519 digital signatures for payload signing and verification.
 
-use axum::{extract::State, extract::Query, response::IntoResponse, response::Response, Json};
+use axum::{extract::Query, extract::State, response::IntoResponse, response::Response, Json};
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, Duration, Utc};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
@@ -165,7 +165,7 @@ pub async fn generate_qr_payload(
             created_at, expires_at, is_used
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        "#
+        "#,
     )
     .bind(&qr_id)
     .bind(&request.qr_type)
@@ -260,8 +260,7 @@ pub async fn verify_qr_payload(
     let verifying_key = match VerifyingKey::from_bytes(&public_key_array) {
         Ok(key) => key,
         Err(e) => {
-            return AppError::ValidationError(format!("Invalid public key: {}", e))
-                .into_response();
+            return AppError::ValidationError(format!("Invalid public key: {}", e)).into_response();
         }
     };
 
@@ -276,18 +275,16 @@ pub async fn verify_qr_payload(
     // Check if already used (if valid)
     let mut is_used = false;
     if is_valid {
-        if let Ok(record) = sqlx::query_as::<_, (bool,)>(
+        if let Ok(Some((used,))) = sqlx::query_as::<_, (bool,)>(
             r#"
             SELECT is_used FROM qr_payloads WHERE id = $1
-            "#
+            "#,
         )
         .bind(&request.payload.id)
         .fetch_optional(&pool)
         .await
         {
-            if let Some((used,)) = record {
-                is_used = used;
-            }
+            is_used = used;
         }
     }
 
@@ -304,7 +301,11 @@ pub async fn verify_qr_payload(
     let response = VerifyQrResponse {
         valid: is_valid && !is_expired && !is_used,
         expired: is_expired,
-        payload: if is_valid { Some(request.payload) } else { None },
+        payload: if is_valid {
+            Some(request.payload)
+        } else {
+            None
+        },
         message,
     };
 
@@ -326,7 +327,7 @@ pub async fn mark_qr_used(
     let record = match sqlx::query_as::<_, (bool, DateTime<Utc>)>(
         r#"
         SELECT is_used, expires_at FROM qr_payloads WHERE id = $1
-        "#
+        "#,
     )
     .bind(&qr_id)
     .fetch_optional(&pool)
@@ -355,7 +356,7 @@ pub async fn mark_qr_used(
     if let Err(e) = sqlx::query(
         r#"
         UPDATE qr_payloads SET is_used = true, used_at = $1 WHERE id = $2
-        "#
+        "#,
     )
     .bind(Utc::now())
     .bind(&qr_id)
@@ -373,10 +374,10 @@ pub async fn mark_qr_used(
 pub struct QrPayloadFilters {
     /// Filter by QR type
     pub qr_type: Option<String>,
-    
+
     /// Filter by usage status
     pub is_used: Option<bool>,
-    
+
     /// Filter expired QR codes
     pub expired: Option<bool>,
 }
@@ -401,21 +402,21 @@ pub async fn list_qr_payloads(
     Query(filters): Query<QrPayloadFilters>,
 ) -> Response {
     let validated_pagination = pagination.validate();
-    
+
     // Build WHERE clause
     let mut where_clauses = Vec::new();
     let mut param_count = 0;
-    
+
     if filters.qr_type.is_some() {
         param_count += 1;
         where_clauses.push(format!("qr_type = ${}", param_count));
     }
-    
+
     if filters.is_used.is_some() {
         param_count += 1;
         where_clauses.push(format!("is_used = ${}", param_count));
     }
-    
+
     if let Some(expired) = filters.expired {
         if expired {
             where_clauses.push("expires_at < NOW()".to_string());
@@ -423,24 +424,24 @@ pub async fn list_qr_payloads(
             where_clauses.push("expires_at >= NOW()".to_string());
         }
     }
-    
+
     let where_clause = if where_clauses.is_empty() {
         String::new()
     } else {
         format!("WHERE {}", where_clauses.join(" AND "))
     };
-    
+
     // Count total
     let count_query = format!("SELECT COUNT(*) FROM qr_payloads {}", where_clause);
     let mut count_query_builder = sqlx::query_scalar::<_, i64>(&count_query);
-    
+
     if let Some(ref qr_type) = filters.qr_type {
         count_query_builder = count_query_builder.bind(qr_type);
     }
     if let Some(is_used) = filters.is_used {
         count_query_builder = count_query_builder.bind(is_used);
     }
-    
+
     let total = match count_query_builder.fetch_one(&pool).await {
         Ok(count) => count,
         Err(e) => {
@@ -448,7 +449,7 @@ pub async fn list_qr_payloads(
             return AppError::DatabaseError(e).into_response();
         }
     };
-    
+
     // Fetch items
     let items_query = format!(
         "SELECT id, qr_type, payload_data, created_at, expires_at, is_used, used_at FROM qr_payloads {} ORDER BY created_at DESC LIMIT ${} OFFSET ${}",
@@ -456,20 +457,20 @@ pub async fn list_qr_payloads(
         param_count + 1,
         param_count + 2
     );
-    
+
     let mut items_query_builder = sqlx::query_as::<_, QrPayloadListItem>(&items_query);
-    
+
     if let Some(ref qr_type) = filters.qr_type {
         items_query_builder = items_query_builder.bind(qr_type);
     }
     if let Some(is_used) = filters.is_used {
         items_query_builder = items_query_builder.bind(is_used);
     }
-    
+
     items_query_builder = items_query_builder
         .bind(validated_pagination.limit())
         .bind(validated_pagination.offset());
-    
+
     let items = match items_query_builder.fetch_all(&pool).await {
         Ok(payloads) => payloads,
         Err(e) => {
@@ -477,7 +478,7 @@ pub async fn list_qr_payloads(
             return AppError::DatabaseError(e).into_response();
         }
     };
-    
+
     let response = PaginatedResponse::new(items, validated_pagination, total);
     success(response, "QR payloads retrieved successfully").into_response()
 }

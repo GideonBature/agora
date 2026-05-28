@@ -861,6 +861,14 @@
                     },
                     {
                       "key": {
+                        "symbol": "owner_address"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "payment_id"
                       },
                       "val": {
@@ -874,6 +882,20 @@
                       "val": {
                         "i128": "5"
                       }
+                    },
+                    {
+                      "key": {
+                        "symbol": "referral_amount"
+                      },
+                      "val": {
+                        "i128": "0"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "referrer"
+                      },
+                      "val": "void"
                     },
                     {
                       "key": {

@@ -55,6 +55,8 @@ fn make_event_args(
         transfer_lock_duration: 0,
         accepted_tokens: soroban_sdk::Vec::new(env),
         use_global_whitelist: true,
+        category_ids: None,
+        referral_rate_bps: None,
     }
 }
 
@@ -246,14 +248,14 @@ fn test_e2e_tier_supply_limits() {
         );
     }
 
-    // 4th fails with TierSupplyExceeded
+    // 4th fails with TierSoldOut
     let result = client.try_increment_inventory(
         &String::from_str(&env, "evt_tier"),
         &String::from_str(&env, "tier_1"),
         &Address::generate(&env),
         &1,
     );
-    assert_eq!(result, Err(Ok(EventRegistryError::TierSupplyExceeded)));
+    assert_eq!(result, Err(Ok(EventRegistryError::TierSoldOut)));
 }
 
 // ---------------------------------------------------------------------------

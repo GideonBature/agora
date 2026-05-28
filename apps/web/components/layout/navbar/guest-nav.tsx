@@ -24,9 +24,7 @@ export function GuestNav({ pathname }: { pathname: string }) {
             href="/discover"
             icon="/icons/earth.svg"
             text="Discover Events"
-            isActive={
-              pathname === "/discover" || pathname.startsWith("/events")
-            }
+            isActive={pathname === "/discover" || pathname.startsWith("/events")}
           />
           <NavLink
             href="/pricing"
@@ -48,18 +46,27 @@ export function GuestNav({ pathname }: { pathname: string }) {
           />
         </div>
 
-        <Link href="/auth">
+        <Link href="/auth" title="Sign in to create an event">
           <Button
             backgroundColor="bg-white"
             textColor="text-black"
             shadowColor="rgba(0,0,0,1)"
+            aria-label="Create event - sign in required"
           >
+            <Image
+              src="/icons/lock.svg"
+              alt=""
+              width={18}
+              height={18}
+              aria-hidden="true"
+            />
             <span>Create Your Event</span>
             <Image
               src="/icons/arrow-up-right-01.svg"
-              alt="Arrow"
+              alt=""
               width={24}
               height={24}
+              aria-hidden="true"
               className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
             />
           </Button>

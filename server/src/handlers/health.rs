@@ -108,10 +108,13 @@ pub async fn health_check_ready(State(pool): State<PgPool>) -> Response {
 /// Returns 200 when the configured Soroban RPC endpoint is reachable.
 /// On failure the response uses [`AppError`] for a consistent error schema.
 pub async fn health_check_blockchain() -> Response {
-    let soroban_rpc_url =
-        std::env::var("SOROBAN_RPC_URL").unwrap_or_else(|_| "https://soroban-testnet.stellar.org".to_string());
+    let soroban_rpc_url = std::env::var("SOROBAN_RPC_URL")
+        .unwrap_or_else(|_| "https://soroban-testnet.stellar.org".to_string());
 
-    let client = match reqwest::Client::builder().timeout(Duration::from_secs(5)).build() {
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(5))
+        .build()
+    {
         Ok(client) => client,
         Err(error) => {
             return AppError::ExternalServiceError(format!(
@@ -146,10 +149,10 @@ pub async fn health_check_blockchain() -> Response {
             resp.status()
         ))
         .into_response(),
-        Err(error) => AppError::ExternalServiceError(format!(
-            "Soroban RPC health check failed: {error}"
-        ))
-        .into_response(),
+        Err(error) => {
+            AppError::ExternalServiceError(format!("Soroban RPC health check failed: {error}"))
+                .into_response()
+        }
     }
 }
 

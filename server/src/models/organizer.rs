@@ -21,6 +21,9 @@ pub struct Organizer {
     pub description: Option<String>,
     /// Primary contact email for the organizer, used for platform communications.
     pub contact_email: String,
+    /// Optional Stellar wallet address linking this organizer to their on-chain identity
+    /// and [`super::organizer_profile::OrganizerProfile`].
+    pub wallet_address: Option<String>,
     /// Timestamp when the organizer account was created.
     pub created_at: DateTime<Utc>,
     /// Timestamp of the last update to this record. Managed by a DB trigger.

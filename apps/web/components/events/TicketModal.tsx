@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import { X, Minus, Plus, Ticket, ArrowRight, CheckCircle2 } from "lucide-react";
+import { X, Minus, Plus, Ticket, ArrowRight, CheckCircle2, Gift } from "lucide-react";
 import Image from "next/image";
 
 interface TicketModalProps {
@@ -24,6 +24,8 @@ export function TicketModal({ isOpen, onClose, event, initialQuantity }: TicketM
   const [quantity, setQuantity] = useState(initialQuantity);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchasedTicket, setPurchasedTicket] = useState<{ id: string } | null>(null);
+  const [recipientWallet, setRecipientWallet] = useState<string>("");
+  const [isGiftMode, setIsGiftMode] = useState(false);
 
   const isFree = event.price.toLowerCase() === "free";
   const unitPrice = isFree ? 0 : parseFloat(event.price.replace("$", ""));
@@ -32,16 +34,28 @@ export function TicketModal({ isOpen, onClose, event, initialQuantity }: TicketM
   const handleConfirmPurchase = async () => {
     setIsPurchasing(true);
     try {
+      const requestBody: {
+        eventId: string;
+        quantity: number;
+        buyerWallet: string;
+        recipientWallet?: string;
+      } = {
+        eventId: event.id.toString(),
+        quantity: quantity,
+        buyerWallet: "G...MOCK_WALLET_ADDRESS", // Placeholder
+      };
+
+      // Only include recipientWallet if gift mode is enabled and address is provided
+      if (isGiftMode && recipientWallet.trim()) {
+        requestBody.recipientWallet = recipientWallet.trim();
+      }
+
       const response = await fetch("/api/payments/ticket", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          eventId: event.id.toString(),
-          quantity: quantity,
-          buyerWallet: "G...MOCK_WALLET_ADDRESS", // Placeholder
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -51,7 +65,12 @@ export function TicketModal({ isOpen, onClose, event, initialQuantity }: TicketM
       }
 
       setPurchasedTicket({ id: data.ticketId });
-      toast.success("Ticket purchased successfully!");
+      if (isGiftMode && recipientWallet.trim()) {
+        toast.success("Ticket purchased as a gift! The recipient will see it in their wallet.");
+      } else {
+        toast.success("Ticket purchased successfully!");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
@@ -124,6 +143,51 @@ export function TicketModal({ isOpen, onClose, event, initialQuantity }: TicketM
 
                   <div className="h-[1px] bg-black/5 w-full" />
 
+                  {/* Gift Mode Toggle */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Gift size={20} className="text-black/70" />
+                      <span className="text-lg font-bold text-black">Gift to someone?</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsGiftMode(!isGiftMode);
+                        if (isGiftMode) setRecipientWallet("");
+                      }}
+                      className={`w-14 h-8 rounded-full transition-colors relative ${
+                        isGiftMode ? "bg-[#FDDA23]" : "bg-gray-300"
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
+                          isGiftMode ? "translate-x-7" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Recipient Wallet Input */}
+                  {isGiftMode && (
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="recipientWallet" className="text-sm font-bold text-black/70">
+                        Recipient Wallet Address
+                      </label>
+                      <input
+                        id="recipientWallet"
+                        type="text"
+                        value={recipientWallet}
+                        onChange={(e) => setRecipientWallet(e.target.value)}
+                        placeholder="G... (Stellar address)"
+                        className="w-full px-4 py-3 rounded-xl border border-black/10 bg-white focus:outline-none focus:ring-2 focus:ring-[#FDDA23] font-mono text-sm"
+                      />
+                      <p className="text-xs text-black/50">
+                        The ticket will be sent to this wallet address
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="h-[1px] bg-black/5 w-full" />
+
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-black">Total Price</span>
                     <span className="text-2xl font-bold text-black font-heading">
@@ -159,7 +223,11 @@ export function TicketModal({ isOpen, onClose, event, initialQuantity }: TicketM
 
                 <div className="flex flex-col gap-2">
                   <h2 className="text-3xl font-bold text-black font-heading">Ticket Minted!</h2>
-                  <p className="text-black/60 font-medium">Your ticket has been successfully registered on the Stellar network.</p>
+                  <p className="text-black/60 font-medium">
+                    {isGiftMode && recipientWallet.trim()
+                      ? `Your gift ticket has been sent to ${recipientWallet.slice(0, 8)}...${recipientWallet.slice(-4)} on the Stellar network.`
+                      : "Your ticket has been successfully registered on the Stellar network."}
+                  </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-3xl shadow-xl border border-black/5 flex flex-col items-center gap-4">
