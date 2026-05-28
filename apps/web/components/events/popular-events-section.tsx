@@ -145,7 +145,7 @@ export function PopularEventsSection({ onError }: PopularEventsSectionProps) {
   };
 
   return (
-    <section className="px-4 bg-[#FFFBE9] py-12">
+    <section className="px-4 bg-base py-12">
       <div className="max-w-305.25 mx-auto">
         <motion.div
           className="flex justify-between gap-3 mb-5.75"
@@ -290,7 +290,7 @@ export function PopularEventsSection({ onError }: PopularEventsSectionProps) {
           whileTap={{ scale: 0.97 }}
         >
           <Button
-            backgroundColor="bg-[#FDDA23]"
+            backgroundColor="bg-accent"
             shadowColor="transparent"
             className="border-none rounded-[13px]! h-11"
           >

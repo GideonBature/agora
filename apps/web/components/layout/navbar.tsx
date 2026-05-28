@@ -85,6 +85,7 @@ export function Navbar() {
 
         <div className="flex items-center lg:hidden">
           <button
+            type="button"
             onClick={toggleMenu}
             className="z-50 flex flex-col justify-center items-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-black/10 hover:bg-white/20 transition-colors"
             aria-label="Toggle Menu"
@@ -126,6 +127,7 @@ export function Navbar() {
               className="fixed top-0 right-0 h-full w-[300px] bg-white z-50 shadow-2xl flex flex-col p-8 pt-24 lg:hidden"
             >
               <button
+                type="button"
                 onClick={toggleMenu}
                 className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 transition-colors"
                 aria-label="Close Menu"

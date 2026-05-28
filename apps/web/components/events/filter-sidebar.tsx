@@ -202,7 +202,7 @@ export function FilterSidebar({
             className="
               fixed top-0 right-0 z-50 h-full
               w-full max-w-[360px] sm:max-w-[420px]
-              bg-[#FFFBE9] shadow-[-8px_0_32px_rgba(0,0,0,0.12)]
+              bg-base shadow-[-8px_0_32px_rgba(0,0,0,0.12)]
               flex flex-col overflow-y-auto
             "
             variants={sidebarVariants}
@@ -224,12 +224,14 @@ export function FilterSidebar({
               </div>
               <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="text-[13px] font-medium text-black/50 hover:text-black transition-colors underline underline-offset-2"
                 >
                   Clear Filter
                 </button>
                 <button
+                  type="button"
                   onClick={onClose}
                   aria-label="Close filters"
                   className="
@@ -382,6 +384,7 @@ export function FilterSidebar({
             {/* ── Footer CTA ── */}
             <div className="px-6 py-5 border-t border-black/10 shrink-0">
               <button
+                type="button"
                 onClick={handleApply}
                 className="
                   w-full h-12 rounded-[13px] bg-black text-white font-semibold text-[15px]
@@ -418,6 +421,7 @@ interface PillProps {
 function Pill({ label, active, onClick }: PillProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`
         px-4 py-2 rounded-full text-[13px] font-medium border transition-all
@@ -440,12 +444,13 @@ interface IconPillProps extends PillProps {
 function IconPill({ label, icon, active, onClick }: IconPillProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`
         flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium border transition-all
         ${
           active
-            ? "bg-[#FDDA23] text-black border-black shadow-[-3px_3px_0_rgba(0,0,0,1)]"
+            ? "bg-accent text-black border-black shadow-[-3px_3px_0_rgba(0,0,0,1)]"
             : "bg-white text-black border-black/20 hover:border-black/50"
         }
       `}

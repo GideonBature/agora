@@ -53,6 +53,7 @@ export function Button({
 
   return (
     <button
+      type="button"
       className={`
         group flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-black
         font-semibold transition-all whitespace-nowrap

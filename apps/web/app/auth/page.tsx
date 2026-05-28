@@ -62,7 +62,7 @@ export default function AuthPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#A9A495] relative flex items-center justify-center">
+    <main className="min-h-screen bg-sand relative flex items-center justify-center">
       {/* Back Button */}
       <button
         type="button"
@@ -85,7 +85,7 @@ export default function AuthPage() {
       </button>
 
       {/* Auth Card */}
-      <div className="w-[360px] bg-[#F3EEDC] rounded-2xl shadow-[0_8px_0_#00000020] p-8 flex flex-col items-center">
+      <div className="w-[360px] bg-cream rounded-2xl shadow-[0_8px_0_#00000020] p-8 flex flex-col items-center">
         {/* Logo Container (Ticked Black Card Style) */}
         <div className="mb-6">
           <div
@@ -144,8 +144,8 @@ export default function AuthPage() {
             disabled={isLoading}
             className="
               w-full
-              bg-[#FACC15]
-              hover:bg-[#EAB308]
+              bg-accent
+              hover:bg-accent-hover
               rounded-full
               py-2
               font-medium
