@@ -724,36 +724,37 @@ mod tests {
     }
 
     #[test]
-    fn test_sold_out_status_when_minted_equals_total() {
-        let status = SoldOutStatus {
-            is_sold_out: 500 >= 500,
-            minted: 500,
-            total: 500,
-        };
-        assert!(status.is_sold_out);
-        assert_eq!(status.minted, 500);
-        assert_eq!(status.total, 500);
+    fn test_ratings_summary_distribution_zero_filled() {
+        let mut distribution = std::collections::HashMap::new();
+        for star in 1i16..=5 {
+            distribution.insert(star.to_string(), 0i64);
+        }
+        // Simulate two ratings: one 4-star, one 5-star
+        distribution.insert("4".to_string(), 1i64);
+        distribution.insert("5".to_string(), 1i64);
+
+        assert_eq!(distribution["1"], 0);
+        assert_eq!(distribution["2"], 0);
+        assert_eq!(distribution["3"], 0);
+        assert_eq!(distribution["4"], 1);
+        assert_eq!(distribution["5"], 1);
     }
 
     #[test]
-    fn test_sold_out_status_when_not_sold_out() {
-        let status = SoldOutStatus {
-            is_sold_out: 100 >= 500,
-            minted: 100,
-            total: 500,
-        };
-        assert!(!status.is_sold_out);
+    fn test_ratings_summary_average_no_ratings() {
+        let total = 0i64;
+        let average = if total > 0 { 1.0f64 } else { 0.0f64 };
+        assert_eq!(average, 0.0);
     }
 
     #[test]
-    fn test_sold_out_status_when_minted_exceeds_total() {
-        // Edge case: minted > total (e.g. after a refund reversal)
-        let status = SoldOutStatus {
-            is_sold_out: 501 >= 500,
-            minted: 501,
-            total: 500,
-        };
-        assert!(status.is_sold_out);
+    fn test_ratings_summary_average_computed() {
+        // 1×4 + 1×5 = 9 / 2 = 4.5
+        let rows: Vec<(i16, i64)> = vec![(4, 1), (5, 1)];
+        let total: i64 = rows.iter().map(|(_, c)| c).sum();
+        let weighted: i64 = rows.iter().map(|(r, c)| *r as i64 * c).sum();
+        let average = weighted as f64 / total as f64;
+        assert_eq!(average, 4.5);
     }
 }
 
@@ -764,73 +765,101 @@ pub struct CheckInStats {
     pub remaining: i64,
 }
 
-/// Cache TTL for sold-out status (60 seconds)
-const SOLD_OUT_CACHE_TTL: Duration = Duration::from_secs(60);
-
-/// Response body for the is-sold-out endpoint
+/// Response body for the ratings summary endpoint
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SoldOutStatus {
-    pub is_sold_out: bool,
-    pub minted: i32,
-    pub total: i32,
+pub struct RatingsSummary {
+    pub average: f64,
+    pub total: i64,
+    pub distribution: std::collections::HashMap<String, i64>,
 }
 
-/// GET /api/v1/events/:id/is-sold-out
+/// GET /api/v1/events/:id/ratings/summary
 ///
-/// Returns whether an event is sold out by comparing `minted_tickets` to
-/// `total_tickets`. Result is cached in Redis for 60 seconds.
-pub async fn get_sold_out_status(
+/// Returns the star-rating distribution for an event. Result is cached for 5 minutes.
+pub async fn get_ratings_summary(
     State(mut state): State<EventState>,
     Path(event_id): Path<Uuid>,
 ) -> Response {
-    let cache_key = format!("event:sold_out:{}", event_id);
+    let cache_key = format!("event:ratings_summary:{}", event_id);
 
-    match state.redis.get::<SoldOutStatus>(&cache_key).await {
-        Ok(Some(status)) => {
-            return success(status, "Sold-out status retrieved (cached)").into_response()
+    match state.redis.get::<RatingsSummary>(&cache_key).await {
+        Ok(Some(summary)) => {
+            return success(summary, "Ratings summary retrieved (cached)").into_response()
         }
         Ok(None) => {}
-        Err(e) => tracing::warn!("Redis error for sold-out cache: {:?}", e),
+        Err(e) => tracing::warn!("Redis error for ratings summary cache: {:?}", e),
     }
 
-    let row = match sqlx::query_as::<_, (i32, i32)>(
-        "SELECT minted_tickets, total_tickets FROM events WHERE id = $1",
+    // 404 if event doesn't exist
+    let exists = match sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM events WHERE id = $1)",
     )
     .bind(event_id)
-    .fetch_optional(&state.pool)
+    .fetch_one(&state.pool)
     .await
     {
-        Ok(Some(row)) => row,
-        Ok(None) => {
-            return AppError::NotFound(format!("Event with id '{}' not found", event_id))
-                .into_response();
-        }
+        Ok(v) => v,
         Err(e) => {
-            tracing::error!("Failed to fetch event sold-out status: {:?}", e);
+            tracing::error!("Failed to check event existence: {:?}", e);
             return AppError::DatabaseError(e).into_response();
         }
     };
 
-    let (minted, total) = row;
-    let status = SoldOutStatus {
-        is_sold_out: minted >= total,
-        minted,
+    if !exists {
+        return AppError::NotFound(format!("Event with id '{}' not found", event_id))
+            .into_response();
+    }
+
+    let rows = match sqlx::query_as::<_, (i16, i64)>(
+        "SELECT rating, COUNT(*) FROM event_ratings \
+         WHERE event_id = $1 GROUP BY rating ORDER BY rating",
+    )
+    .bind(event_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("Failed to fetch ratings: {:?}", e);
+            return AppError::DatabaseError(e).into_response();
+        }
+    };
+
+    let mut distribution = std::collections::HashMap::new();
+    for star in 1i16..=5 {
+        distribution.insert(star.to_string(), 0i64);
+    }
+    for (rating, count) in &rows {
+        distribution.insert(rating.to_string(), *count);
+    }
+
+    let total: i64 = rows.iter().map(|(_, c)| c).sum();
+    let weighted: i64 = rows.iter().map(|(r, c)| *r as i64 * c).sum();
+    let average = if total > 0 {
+        weighted as f64 / total as f64
+    } else {
+        0.0
+    };
+
+    let summary = RatingsSummary {
+        average,
         total,
+        distribution,
     };
 
     if let Err(e) = state
         .redis
-        .set(&cache_key, &status, SOLD_OUT_CACHE_TTL)
+        .set(&cache_key, &summary, EVENT_CACHE_TTL)
         .await
     {
         tracing::warn!(
-            "Failed to cache sold-out status for event {}: {:?}",
+            "Failed to cache ratings summary for event {}: {:?}",
             event_id,
             e
         );
     }
 
-    success(status, "Sold-out status retrieved").into_response()
+    success(summary, "Ratings summary retrieved").into_response()
 }
 
 /// GET /api/v1/events/:id/check-in-stats
@@ -869,3 +898,4 @@ pub async fn get_checkin_stats(
         Err(e) => AppError::InternalServerError(e.to_string()).into_response(),
     }
 }
+
