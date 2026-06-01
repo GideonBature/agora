@@ -17,3 +17,4 @@ export const createEventSchema = z.object({
 
 export type AuthFormData = z.infer<typeof authSchema>;
 export type CreateEventFormData = z.infer<typeof createEventSchema>;
+export type CreateEventInput = z.infer<typeof createEventSchema>;
