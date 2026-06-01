@@ -585,7 +585,7 @@ function MyEventsContent({ activeTab }: { activeTab: MyEventsTab }) {
           {/* CTA Section */}
           <div className="flex flex-col items-center gap-4">
             <p className="text-xl font-medium leading-5.5 text-center text-ink-deep/36">
-              You haven't created any events yet
+              You haven&apos;t created any events yet
             </p>
             <Link href="/create-event">
               <Button variant="dark" className="rounded-full">
