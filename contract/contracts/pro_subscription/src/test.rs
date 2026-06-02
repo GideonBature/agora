@@ -487,7 +487,7 @@ fn test_pro_member_added_event_on_subscribe() {
 
     // Just check that events were emitted
     let events = env.events().all();
-    assert!(events.len() > 0, "No events emitted");
+    assert!(!events.is_empty(), "No events emitted");
 }
 
 #[test]
@@ -508,7 +508,7 @@ fn test_pro_member_added_event_on_renew() {
 
     // Just check that events were emitted
     let events = env.events().all();
-    assert!(events.len() > 0, "No events emitted");
+    assert!(!events.is_empty(), "No events emitted");
 }
 
 #[test]
@@ -525,7 +525,7 @@ fn test_pro_member_removed_event_on_cancel() {
 
     // Just check that events were emitted
     let events = env.events().all();
-    assert!(events.len() > 0, "No events emitted");
+    assert!(!events.is_empty(), "No events emitted");
 }
 
 // ── Issue #640: get_total_pro_subscriptions accounting ───────────────────────
