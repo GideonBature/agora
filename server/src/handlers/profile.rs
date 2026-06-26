@@ -3,12 +3,13 @@
 //! CRUD operations for organizer-specific metadata stored in `organizer_profiles`.
 //!
 //! ## Endpoints
-//! - `GET  /api/v1/profile`        — fetch the authenticated organizer's profile
-//! - `PUT  /api/v1/profile`        — create or update the authenticated organizer's profile
-//! - `GET  /api/v1/profile/:addr`  — fetch any organizer's public profile by wallet address
+//! - `GET  /api/v1/profile`              — fetch the authenticated organizer's profile
+//! - `PUT  /api/v1/profile`              — create or update the authenticated organizer's profile
+//! - `GET  /api/v1/profile/transactions` — paginated payment history for the authenticated wallet
+//! - `GET  /api/v1/profile/:addr`        — fetch any organizer's public profile by wallet address
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::HeaderMap,
     response::{IntoResponse, Response},
     Json,
@@ -16,10 +17,16 @@ use axum::{
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use std::time::Duration;
 
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use sqlx::FromRow;
+use uuid::Uuid;
+
 use crate::cache::RedisCache;
 use crate::handlers::auth::extract_auth;
 use crate::models::organizer_profile::{OrganizerProfile, UpsertProfileRequest};
 use crate::utils::error::AppError;
+use crate::utils::pagination::{PaginatedResponse, PaginationParams};
 use crate::utils::response::success;
 
 use once_cell::sync::Lazy;
@@ -270,6 +277,84 @@ pub async fn get_my_profile(State(mut state): State<ProfileState>, headers: Head
     };
 
     fetch_profile_by_address(&state.pool, &mut state.redis, &address).await
+}
+
+/// Summary of a payment transaction returned by `GET /api/v1/profile/transactions`.
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct TransactionSummary {
+    pub id: Uuid,
+    pub event_id: Option<Uuid>,
+    pub amount: Decimal,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// `GET /api/v1/profile/transactions`
+///
+/// Returns a paginated list of payment transactions for the authenticated wallet,
+/// ordered by `created_at` descending. Requires a valid JWT.
+pub async fn list_my_transactions(
+    State(state): State<ProfileState>,
+    headers: HeaderMap,
+    Query(pagination): Query<PaginationParams>,
+) -> Response {
+    let address = match extract_auth(&headers) {
+        Ok(a) => a,
+        Err(e) => return e.into_response(),
+    };
+
+    let validated = pagination.validate();
+
+    let total = match sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*)
+        FROM transactions tr
+        INNER JOIN tickets t ON tr.ticket_id = t.id
+        WHERE t.buyer_wallet = $1
+        "#,
+    )
+    .bind(&address)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::error!("Failed to count wallet transactions: {:?}", e);
+            return AppError::DatabaseError(e).into_response();
+        }
+    };
+
+    let items = match sqlx::query_as::<_, TransactionSummary>(
+        r#"
+        SELECT
+            tr.id,
+            COALESCE(t.event_id, tt.event_id) AS event_id,
+            tr.amount,
+            tr.status,
+            tr.created_at
+        FROM transactions tr
+        INNER JOIN tickets t ON tr.ticket_id = t.id
+        LEFT JOIN ticket_tiers tt ON t.ticket_tier_id = tt.id
+        WHERE t.buyer_wallet = $1
+        ORDER BY tr.created_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(&address)
+    .bind(validated.limit())
+    .bind(validated.offset())
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("Failed to fetch wallet transactions: {:?}", e);
+            return AppError::DatabaseError(e).into_response();
+        }
+    };
+
+    let response = PaginatedResponse::new(items, validated, total);
+    success(response, "Transactions retrieved successfully").into_response()
 }
 
 /// `GET /api/v1/profile/:address`
@@ -666,5 +751,25 @@ mod tests {
         assert_eq!(v["data"]["total_events"].as_i64().unwrap(), 2);
         assert_eq!(v["data"]["total_tickets_sold"].as_i64().unwrap(), 100);
         assert!((v["data"]["average_event_rating"].as_f64().unwrap() - 4.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_transaction_summary_serializes_required_fields() {
+        let now = Utc::now();
+        let event_id = Uuid::new_v4();
+        let summary = TransactionSummary {
+            id: Uuid::new_v4(),
+            event_id: Some(event_id),
+            amount: Decimal::new(2500, 2),
+            status: "completed".to_string(),
+            created_at: now,
+        };
+
+        let value = serde_json::to_value(&summary).unwrap();
+        assert!(value.get("id").is_some());
+        assert_eq!(value["event_id"], json!(event_id));
+        assert_eq!(value["amount"], json!("25.00"));
+        assert_eq!(value["status"], json!("completed"));
+        assert!(value.get("created_at").is_some());
     }
 }
