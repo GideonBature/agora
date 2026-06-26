@@ -143,11 +143,16 @@ pub enum CursorError {
     Deserialize(#[from] serde_json::Error),
 }
 
-/// Cursor structure for event listings ordered by (start_time ASC, id ASC).
+/// Cursor structure for event listings. The active sort key is determined by the
+/// request's `sort_by` parameter; all fields are stored for stable pagination.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventCursor {
     pub start_time: chrono::DateTime<chrono::Utc>,
     pub id: uuid::Uuid,
+    #[serde(default)]
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(default)]
+    pub minted_tickets: Option<i64>,
 }
 
 /// Cursor structure for past event listings ordered by (end_time DESC, id DESC).
@@ -198,6 +203,8 @@ mod tests {
         let cursor = EventCursor {
             start_time: Utc::now(),
             id: Uuid::new_v4(),
+            created_at: None,
+            minted_tickets: None,
         };
 
         let encoded = encode_cursor(&cursor).unwrap();

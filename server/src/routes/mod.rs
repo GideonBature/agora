@@ -41,7 +41,8 @@ use crate::handlers::{
     events::{
         export_attendees_csv, get_attendee_count, get_checkin_stats, get_event, get_event_counts,
         get_event_organizer, get_event_share_link, get_event_social_proof, get_ratings_summary,
-        list_event_tickets, list_events, list_events_by_category, list_past_events,
+        list_event_tickets, list_events, list_events_by_category, list_featured_events,
+        list_past_events,
         list_similar_events, list_ticket_tiers, list_upcoming_events, search_events,
         submit_event_rating, toggle_event_flag, EventState,
     },

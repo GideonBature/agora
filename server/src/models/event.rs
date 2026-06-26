@@ -43,6 +43,9 @@ pub struct Event {
     /// Populated after fetch via `populate_is_free`; never read from DB.
     #[sqlx(skip)]
     pub is_free: bool,
+    /// Number of tickets minted for this event. Loaded from DB for sorting; omitted from API.
+    #[serde(skip)]
+    pub minted_tickets: i64,
 }
 
 impl Event {
@@ -141,6 +144,7 @@ mod tests {
             updated_at: DateTime::default(),
             image_url: None,
             is_free: false,
+            minted_tickets: 0,
         };
         assert!(!event.is_free);
     }
@@ -162,6 +166,7 @@ mod tests {
             updated_at: DateTime::default(),
             image_url: None,
             is_free: false,
+            minted_tickets: 0,
         };
         event.is_free = true;
         let json = serde_json::to_value(&event).unwrap();
@@ -185,6 +190,7 @@ mod tests {
             updated_at: DateTime::default(),
             image_url: None,
             is_free: false,
+            minted_tickets: 0,
         };
         assert!(event.average_rating().is_none());
     }
@@ -206,6 +212,7 @@ mod tests {
             updated_at: DateTime::default(),
             image_url: None,
             is_free: false,
+            minted_tickets: 0,
         };
         let json = serde_json::to_value(&event).unwrap();
         assert_eq!(json["average_rating"], 4.5);
@@ -228,6 +235,7 @@ mod tests {
             updated_at: DateTime::default(),
             image_url: None,
             is_free: false,
+            minted_tickets: 0,
         };
         let json = serde_json::to_value(&event).unwrap();
         assert!(json["average_rating"].is_null());
