@@ -153,7 +153,6 @@ pub async fn create_routes(pool: PgPool, config: Config, redis: RedisCache) -> R
     let event_routes = Router::new()
         .route("/", get(list_events))
         .route("/count", get(get_event_counts))
-        .route("/featured", get(list_featured_events))
         .route("/past", get(list_past_events))
         .route("/upcoming", get(list_upcoming_events))
         .route("/search", get(search_events))

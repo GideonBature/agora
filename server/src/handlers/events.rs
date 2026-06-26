@@ -1464,6 +1464,7 @@ pub async fn search_events(
     State(mut state): State<EventState>,
     Query(params): Query<SearchParams>,
 ) -> Response {
+    let start = std::time::Instant::now();
     let pagination = PaginationParams {
         page: params.page,
         page_size: params.page_size,
