@@ -23,20 +23,40 @@ fn metadata_cid(env: &Env) -> String {
 }
 
 fn event_args(env: &Env, event_id: &str, organizer: &Address) -> EventRegistrationArgs {
+    event_args_with_tier_count(env, event_id, organizer, 1)
+}
+
+fn tier_id_for_index(env: &Env, i: u32) -> String {
+    const IDS: [&str; 21] = [
+        "tier_00", "tier_01", "tier_02", "tier_03", "tier_04", "tier_05", "tier_06", "tier_07",
+        "tier_08", "tier_09", "tier_10", "tier_11", "tier_12", "tier_13", "tier_14", "tier_15",
+        "tier_16", "tier_17", "tier_18", "tier_19", "tier_20",
+    ];
+    String::from_str(env, IDS[i as usize])
+}
+
+fn event_args_with_tier_count(
+    env: &Env,
+    event_id: &str,
+    organizer: &Address,
+    tier_count: u32,
+) -> EventRegistrationArgs {
     let mut tiers = Map::new(env);
-    tiers.set(
-        String::from_str(env, "general"),
-        TicketTier {
-            name: String::from_str(env, "General"),
-            price: 1000,
-            tier_limit: 100,
-            current_sold: 0,
-            is_refundable: true,
-            auction_config: Vec::new(env),
-            loyalty_multiplier: 1,
-            max_per_user: 0,
-        },
-    );
+    for i in 0..tier_count {
+        tiers.set(
+            tier_id_for_index(env, i),
+            TicketTier {
+                name: String::from_str(env, "General"),
+                price: 1000,
+                tier_limit: 100,
+                current_sold: 0,
+                is_refundable: true,
+                auction_config: Vec::new(env),
+                loyalty_multiplier: 1,
+                max_per_user: 0,
+            },
+        );
+    }
 
     EventRegistrationArgs {
         event_id: String::from_str(env, event_id),
@@ -44,7 +64,7 @@ fn event_args(env: &Env, event_id: &str, organizer: &Address) -> EventRegistrati
         organizer_address: organizer.clone(),
         payment_address: Address::generate(env),
         metadata_cid: metadata_cid(env),
-        max_supply: 100,
+        max_supply: (tier_count as i128) * 100,
         milestone_plan: None,
         tiers,
         refund_deadline: 0,
@@ -105,6 +125,37 @@ fn store_event_without_auth(env: &Env, contract_id: &Address, event_id: &str, or
     };
 
     env.as_contract(contract_id, || storage::store_event(env, event));
+}
+
+#[test]
+fn test_register_event_too_many_tiers() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _contract_id) = setup(&env);
+    let organizer = Address::generate(&env);
+
+    let result = client.try_register_event(&event_args_with_tier_count(
+        &env,
+        "too_many_tiers_event",
+        &organizer,
+        21,
+    ));
+    assert_eq!(result, Err(Ok(EventRegistryError::TooManyTiers)));
+
+    client.register_event(&event_args_with_tier_count(
+        &env,
+        "max_tiers_event",
+        &organizer,
+        20,
+    ));
+    assert_eq!(
+        client
+            .get_event(&String::from_str(&env, "max_tiers_event"))
+            .unwrap()
+            .tiers
+            .len(),
+        20
+    );
 }
 
 #[test]

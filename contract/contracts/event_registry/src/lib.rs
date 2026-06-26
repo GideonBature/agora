@@ -27,6 +27,9 @@ use crate::types::{SeriesPass, SeriesRegistry};
 
 use crate::error::EventRegistryError;
 
+/// Maximum number of ticket tiers allowed per event during registration.
+const MAX_TIERS_PER_EVENT: u32 = 20;
+
 #[contract]
 pub struct EventRegistry;
 
@@ -212,6 +215,10 @@ impl EventRegistry {
 
         if storage::event_exists(&env, args.event_id.clone()) {
             return Err(EventRegistryError::EventAlreadyExists);
+        }
+
+        if args.tiers.len() > MAX_TIERS_PER_EVENT {
+            return Err(EventRegistryError::TooManyTiers);
         }
 
         // Validate tier limits don't exceed max_supply
